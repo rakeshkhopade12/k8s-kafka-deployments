@@ -34,21 +34,25 @@ kind: Service
 metadata:
   name: ftn-source-io-connector
 spec:
-  type: NodePort
+  type: NodePort  # Or ClusterIP if exposing through Ingress
   selector:
     app: ftn-source-io-connector
   ports:
-    - name: http-port
+    - name: http-port-8080
       protocol: TCP
       port: 8080
       targetPort: 8080
+      nodePort: 30080  # Optional: Specify or remove for dynamic allocation
+
     - name: http-port-8081
       protocol: TCP
       port: 8081
       targetPort: 8081
       nodePort: 30081
-    - name: http-port-9098
+
+    - name: http-port-8082  # ✅ Exposing your management/actuator port!
       protocol: TCP
-      port: 9098
-      targetPort: 9098
+      port: 8082
+      targetPort: 8082
+      nodePort: 30082  # Optional: pick a unique port in the NodePort range
 

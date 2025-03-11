@@ -1,0 +1,62 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kafka-ftn-ingress
+  namespace: kafka
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"          # 👈 Enable regex
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: 116.204.173.55.nip.io
+    http:
+      paths:
+      - path: /source-io(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: ftn-source-io-connector
+            port:
+              number: 8080
+
+      - path: /source-io/prometheus(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: ftn-source-io-connector
+            port:
+              number: 8082
+
+      - path: /job-gateway(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: ftn-job-gateway-service
+            port:
+              number: 8087
+
+      - path: /gateway-adapter(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: ftn-gateway-adapter
+            port:
+              number: 8088
+
+      - path: /mobile-validator(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: ftn-mobile-validator-service
+            port:
+              number: 8082
+
+      - path: /rule-validator(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: ftn-rule-validator-service
+            port:
+              number: 8083
