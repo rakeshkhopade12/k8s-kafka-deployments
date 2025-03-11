@@ -1,0 +1,46 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: "0.0.0.0:4317"
+      http:
+        endpoint: "0.0.0.0:4318"
+
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: "ftn-source-io-connector"
+          scrape_interval: 10s
+          metrics_path: "/actuator/prometheus"  # Corrected indentation
+          static_configs:
+            - targets: ["ftn-source-io-connector.kafka.svc.cluster.local:8080"]
+              labels:  # Moved labels inside static_configs
+                app: "ftn-source-io-connector"
+        - job_name: "ftn-source-io-connector-8081"
+          scrape_interval: 10s
+          metrics_path: "/actuator/prometheus"
+          static_configs:
+            - targets: ["ftn-source-io-connector.kafka.svc.cluster.local:8081"]
+              labels:
+                app: "ftn-source-io-connector"
+                port: "8081"
+exporters:
+  debug:
+    verbosity: detailed
+  otlp:
+    endpoint: "otel-collector:4317"
+    compression: none
+    tls:
+      insecure: true
+  prometheus:
+    endpoint: "0.0.0.0:9464"
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [debug]
+    metrics:
+      receivers: [otlp, prometheus]
+      exporters: [prometheus]
+

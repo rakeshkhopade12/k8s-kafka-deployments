@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftn-rule-validator-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ftn-rule-validator-service
+  template:
+    metadata:
+      labels:
+        app: ftn-rule-validator-service
+    spec:
+      nodeSelector:
+        node-role: spring-app
+      containers:
+        - name: ftn-rule-validator-service
+          image: rakeshkhopade/ftn-rule-validator-service:0.0.2-SNAPSHOT
+          ports:
+            - containerPort: 8083
+          env:
+            - name: KAFKA_BROKER_URL
+              value: "kafka.kafka.svc.cluster.local:9092"
+#          volumeMounts:
+ #           - name: otel-collector-config
+  #            mountPath: /etc/otel-collector-config.yaml
+   #           subPath: otel-collector-config.yaml
+    #  volumes:
+     #   - name: otel-collector-config
+      #    configMap:
+       #     name: otel-collector-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ftn-rule-validator-service
+spec:
+  selector:
+    app: ftn-rule-validator-service
+  ports:
+    - protocol: TCP
+      port: 8083
+      targetPort: 8083
+  clusterIP: None

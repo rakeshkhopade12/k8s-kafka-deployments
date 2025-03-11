@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector
+  namespace: kafka
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: otel-collector
+  template:
+    metadata:
+      labels:
+        app: otel-collector
+    spec:
+      containers:
+        - name: otel-collector
+          image: otel/opentelemetry-collector
+          command: ["/otelcol"]
+          args: ["--config=/etc/otel-collector-config.yaml"]
+
+         #command:
+          #  - "--config=/etc/otel-collector-config.yaml"
+          volumeMounts:
+            - mountPath: /var/run/docker.sock
+              name: docker-socket
+            - mountPath: /etc/otel-collector-config.yaml
+              name: otel-collector-config
+              subPath: otel-collector-config.yaml
+          ports:
+            - containerPort: 4317
+              name: otel-port-4317
+            - containerPort: 4318
+              name: otel-port-4318
+            - containerPort: 9464
+              name: otel-port-9464
+          env:
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "service.name=otel-collector"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otel-collector:4317"
+      volumes:
+        - name: docker-socket
+          hostPath:
+            path: /var/run/docker.sock
+        - name: otel-collector-config
+          configMap:
+            name: otel-collector-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-collector
+  namespace: kafka
+spec:
+  ports:
+    - name: otel-port-4317
+      port: 4317
+      targetPort: 4317
+    - name: otel-port-4318
+      port: 4318
+      targetPort: 4318
+    - name: otel-port-9464
+      port: 9464
+      targetPort: 9464
+  selector:
+    app: otel-collector

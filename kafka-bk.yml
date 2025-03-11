@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka
+  namespace: kafka
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      containers:
+        - name: kafka
+          image: confluentinc/cp-kafka:7.3.2
+          ports:
+            - containerPort: 9092  # External access
+            - containerPort: 29092 # Internal broker communication
+            - containerPort: 7075  # JMX exporter port
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+          env:
+            - name: KAFKA_BROKER_ID
+              value: "1"
+            - name: KAFKA_ZOOKEEPER_CONNECT
+              value: "zookeeper.kafka.svc.cluster.local:2181"
+            - name: KAFKA_ADVERTISED_LISTENERS
+              value: "PLAINTEXT://kafka:29092"
+            - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+              value: "PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT"
+            - name: KAFKA_LISTENERS
+              value: "PLAINTEXT://0.0.0.0:9092,INTERNAL://0.0.0.0:29092"
+            - name: KAFKA_LISTENER_NAMES
+              value: "PLAINTEXT,INTERNAL"
+            - name: KAFKA_AUTO_CREATE_TOPICS_ENABLE
+              value: "true"
+            - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+              value: "1"
+            - name: KAFKA_JMX_OPTS
+              value: "-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=0.0.0.0"
+            - name: KAFKA_OPTS
+              value: "-javaagent:/usr/share/java/jmx_prometheus_javaagent.jar=7075:/etc/kafka/jmx_exporter.yml"
+          volumeMounts:
+            - mountPath: /usr/share/java/jmx_prometheus_javaagent.jar
+              name: jmx-exporter
+              subPath: jmx_prometheus_javaagent.jar
+            - mountPath: /etc/kafka/jmx_exporter.yml
+              name: jmx-exporter
+              subPath: jmx_exporter.yml
+      volumes:
+        - name: jmx-exporter
+          hostPath:
+            path: /home/liberin/kafka/jmx_exporter
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+  namespace: kafka
+spec:
+  ports:
+    - name: port-9092
+      port: 9092
+      targetPort: 9092
+    - name: port-29092
+      port: 29092
+      targetPort: 29092
+    - name: port-7075
+      port: 7075
+      targetPort: 7075
+  selector:
+    app: kafka

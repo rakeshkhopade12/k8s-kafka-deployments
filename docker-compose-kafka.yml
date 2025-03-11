@@ -1,0 +1,136 @@
+version: '3'
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /home/liberin/kafka/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317"    # gRPC endpoint
+      - "4318:4318"    # HTTP endpoint
+      - "9464:9464"    # Prometheus exporter
+    environment:
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=otel-collector
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+   # user: liberin
+    group_add:
+      - "1002"
+    networks:
+      - kafka-net
+
+  kafka-ui:
+    container_name: kafka-ui
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - 8123:8080
+    environment:
+      DYNAMIC_CONFIG_ENABLED: 'true'
+    volumes:
+      - /home/liberin/kafka/config.yml:/etc/kafkaui/dynamic_config.yaml
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.2
+    container_name: zoo1
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_SERVERS: zookeeper:2888:3888
+    networks:
+      - kafka-net
+
+  kafka:
+    image: confluentinc/cp-kafka:7.3.2
+    container_name: kafka1
+    ports:
+      - "9092:9092"      # Exposed for external access
+      - "29092:29092"    # Internal broker communication
+      - "7075:7075"
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_RESOURCE_ATTRIBUTES: service.name=kafka1
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,INTERNAL://0.0.0.0:29092
+      KAFKA_LISTENER_NAMES: PLAINTEXT,INTERNAL
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,prometheus"
+      MANAGEMENT_ENDPOINT_PROMETHEUS_ENABLED: "true"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_JMX_OPTS: "-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=0.0.0.0"
+      KAFKA_OPTS: "-javaagent:/usr/share/java/jmx_prometheus_javaagent.jar=7075:/etc/kafka/jmx_exporter.yml"
+      KAFKA_JMX_PORT: 7072                                 # Enable JMX
+#      KAFKA_OPTS: "-javaagent:/usr/share/java/jmx_prometheus_javaagent.jar=7072:/etc/kafka/jmx_exporter.yml"  # JMX exporter
+    volumes:
+      - /home/liberin/kafka/jmx_exporter/jmx_prometheus_javaagent.jar:/usr/share/java/jmx_prometheus_javaagent.jar  # JMX agent JAR
+      - /home/liberin/kafka/jmx_exporter/jmx_exporter.yml:/etc/kafka/jmx_exporter.yml     
+    depends_on:
+      - zookeeper
+    networks:
+      - kafka-net
+      
+  ftn-source-io-connector:
+    image: ftn-source-io-connector:0.0.1-SNAPSHOT
+    container_name: ftn-source-io-connector
+    ports:
+      - "7092:8080"
+      - "9098:9098"
+      - "7093:8081"
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_RESOURCE_ATTRIBUTES: service.name=ftn-source-io-connector
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      KAFKA_BROKER_URL: kafka1:29092
+      KAFKA_BOOTSTRAP_SERVERS: kafka1:29092  # Ensure this is correctly pointing to the Kafka broker
+      SPRING_KAFKA_BOOTSTRAP-SERVERS: kafka1:29092
+      REST_API_HOST: 0.0.0.0
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,prometheus"  # Exposing relevant actuator endpoints
+      MANAGEMENT_ENDPOINT_PROMETHEUS_ENABLED: "true"   
+    depends_on:
+      - kafka
+    networks:
+      - kafka-net
+
+  ftn-rule-validator-service:
+    image: ftn-rule-validator-service:0.0.1-SNAPSHOT
+    container_name: ftn-rule-validator-service
+    ports:
+      - "8083:8083"
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_RESOURCE_ATTRIBUTES: service.name=ftn-rule-validator-service
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+
+      KAFKA_BROKER_URL: kafka1:29092
+    depends_on:
+      - kafka
+    networks:
+      - kafka-net
+
+  ftn-mobile-validator-service:
+    image: ftn-mobile-validator-service:0.0.1-SNAPSHOT
+    container_name: ftn-mobile-validator-service
+    ports:
+      - "8084:8082"
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_RESOURCE_ATTRIBUTES: service.name=ftn-mobile-validator-service
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      KAFKA_BROKER_URL: kafka1:29092
+    depends_on:
+      - kafka
+    networks:
+      - kafka-net
+networks:
+  kafka-net:
+    driver: bridge

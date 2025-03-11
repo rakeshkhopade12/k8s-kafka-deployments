@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftn-source-io-connector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ftn-source-io-connector
+  template:
+    metadata:
+      labels:
+        app: ftn-source-io-connector
+    spec:
+      containers:
+        - name: ftn-source-io-connector
+          image: rakeshkhopade/ftn-source-io-connector:0.0.3-SNAPSHOT
+          ports:
+            - containerPort: 8080
+            - containerPort: 8081
+          env:
+            #- name: SPRING_APPLICATION_JSON
+             # value: '{"management.server.port":8082}'
+            - name: KAFKA_BROKER_URL
+              value: "kafka.kafka.svc.cluster.local:9092"
+            #- name: OTEL_EXPORTER_OTLP_ENDPOINT
+            #  value: "http://otel-collector:4317"
+          #  - name: OTEL_RESOURCE_ATTRIBUTES
+           #   value: "service.name=ftn-source-io-connector"
+        #    - name: OTEL_TRACES_EXPORTER
+         #     value: "otlp"
+       #     - name: OTEL_METRICS_EXPORTER
+      #        value: "otlp"
+         # volumeMounts:
+          #  - name: otel-java-agent
+           #   mountPath: /otel-javaagent
+              #subPath: opentelemetry-javaagent.jar
+            #  readOnly: true
+          #args:
+           # - "-javaagent:/otel-javaagent/opentelemetry-javaagent.jar"
+ #     volumes:
+  #      - name: otel-java-agent
+   #       hostPath:
+    #        path: /home/liberin/kafka/k8s-kafka/
+#opentelemetry-javaagent.jar
+     #       type: Directory
+#    restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ftn-source-io-connector
+spec:
+  ports:
+    - name: http-port
+      port: 8080
+      targetPort: 8080
+#    - name: http-port-9098
+ #     port: 9098
+  #    targetPort: 9098
+    - name: http-port-8081
+      port: 8081
+      targetPort: 8081
+  selector:
+    app: ftn-source-io-connector

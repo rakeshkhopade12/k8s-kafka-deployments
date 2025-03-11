@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftn-mobile-validator-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ftn-mobile-validator-service
+  template:
+    metadata:
+      labels:
+        app: ftn-mobile-validator-service
+    spec:
+      containers:
+      - name: ftn-mobile-validator-service
+        image: rakeshkhopade/ftn-mobile-validator-service:0.0.2-SNAPSHOT
+        ports:
+        - containerPort: 8082
+        env:
+      #  - name: OTEL_EXPORTER_OTLP_ENDPOINT
+       #   value: "http://otel-collector:4317"
+       # - name: OTEL_RESOURCE_ATTRIBUTES
+       #   value: "service.name=ftn-mobile-validator-service"
+       # - name: OTEL_TRACES_EXPORTER
+       #   value: "otlp"
+       # - name: OTEL_METRICS_EXPORTER
+       #   value: "otlp"
+        - name: KAFKA_BROKER_URL
+          value: "kafka.kafka.svc.cluster.local:29092"
+        volumeMounts:
+        - name: otel-collector-config
+          mountPath: /etc/otel-collector-config.yaml
+          subPath: otel-collector-config.yaml
+      volumes:
+      - name: otel-collector-config
+        configMap:
+          name: otel-collector-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ftn-mobile-validator-service
+spec:
+  selector:
+    app: ftn-mobile-validator-service
+  ports:
+    - protocol: TCP
+      port: 8082
+      targetPort: 8082
+  clusterIP: None
