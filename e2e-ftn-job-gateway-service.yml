@@ -42,3 +42,7 @@ spec:
     - name: http-port
       port: 8087
       targetPort: 8087
+    - name: http-8082
+      port: 8082
+      targetPort: 8082
+

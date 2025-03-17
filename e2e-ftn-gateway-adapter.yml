@@ -42,3 +42,6 @@ spec:
     - name: http-port
       port: 8088
       targetPort: 8088
+    - name: http-8089
+      port: 8089
+      targetPort: 8089

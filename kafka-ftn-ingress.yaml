@@ -19,7 +19,7 @@ spec:
           service:
             name: ftn-source-io-connector
             port:
-              number: 8080
+              number: 8081
 
       - path: /source-io/prometheus(/|$)(.*)
         pathType: ImplementationSpecific
@@ -28,24 +28,15 @@ spec:
             name: ftn-source-io-connector
             port:
               number: 8082
-
-      - path: /job-gateway(/|$)(.*)
-        pathType: ImplementationSpecific
-        backend:
-          service:
-            name: ftn-job-gateway-service
-            port:
-              number: 8087
-
-      - path: /gateway-adapter(/|$)(.*)
+      - path: /gateway-adapter/prometheus(/|$)(.*)
         pathType: ImplementationSpecific
         backend:
           service:
             name: ftn-gateway-adapter
             port:
-              number: 8088
+              number: 8089
 
-      - path: /mobile-validator(/|$)(.*)
+      - path: /mobile-validator/prometheus(/|$)(.*)
         pathType: ImplementationSpecific
         backend:
           service:
@@ -53,10 +44,42 @@ spec:
             port:
               number: 8082
 
-      - path: /rule-validator(/|$)(.*)
+      - path: /rule-validator/prometheus(/|$)(.*)
         pathType: ImplementationSpecific
         backend:
           service:
             name: ftn-rule-validator-service
             port:
               number: 8083
+
+      - path: /job-gateway/prometheus(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: ftn-job-gateway-service
+            port:
+              number: 8082
+
+     # - path: /gateway-adapter(/|$)(.*)
+      #  pathType: ImplementationSpecific
+       # backend:
+        #  service:
+         #   name: ftn-gateway-adapter
+          #  port:
+           #   number: 8088
+
+      #- path: /mobile-validator(/|$)(.*)
+       # pathType: ImplementationSpecific
+        #backend:
+         # service:
+          #  name: ftn-mobile-validator-service
+           # port:
+            #  number: 8082
+
+      #- path: /rule-validator(/|$)(.*)
+       # pathType: ImplementationSpecific
+        #backend:
+         # service:
+          #  name: ftn-rule-validator-service
+           # port:
+            #  number: 8083
