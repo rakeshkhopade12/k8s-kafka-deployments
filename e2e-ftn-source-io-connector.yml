@@ -16,7 +16,7 @@ spec:
         node-role: spring-app  # Ensures the pod runs on spring-app nodes
       containers:
         - name: ftn-source-io-connector
-          image: rakeshkhopade/ftn-source-io-connector:0.0.3-SNAPSHOT
+          image: rakeshkhopade/ftn-source-io-connector:latest
           ports:
             - containerPort: 8080
             - containerPort: 8081
@@ -26,7 +26,7 @@ spec:
               value: "8080"
             - name: MANAGEMENT_SERVER_PORT
               value: "8082"
-            - name: KAFKA_BROKER_URL
+            - name: KAFKA_BROKER_URLS
               value: "kafka.kafka.svc.cluster.local:9092"
 ---
 apiVersion: v1
