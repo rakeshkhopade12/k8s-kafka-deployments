@@ -73,6 +73,14 @@ spec:
             name: kafka-metrics
             port:
               number: 9101 
+
+      - path: /jaeger(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: jaeger-query  # Matches the Helm-installed service name
+            port:
+              number: 16686  # Jaeger UI port
      #- path: /loki(/|$)(.*)
      #   pathType: ImplementationSpecific
     #    backend:

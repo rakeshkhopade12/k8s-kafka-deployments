@@ -1,0 +1,23 @@
+# e2e-jaeger-values.yml
+allInOne:
+  enabled: true
+  image:
+    repository: jaegertracing/all-in-one
+    tag: latest
+    pullPolicy: IfNotPresent
+provisionDataStore:
+  cassandra: false
+  elasticsearch: false  # Use in-memory for simplicity
+storage:
+  type: memory
+agent:
+  enabled: false  # Not needed with all-in-one
+collector:
+  enabled: false  # Disabled since all-in-one handles it
+query:
+  enabled: false  # Disabled since all-in-one handles it
+service:
+  type: ClusterIP
+  ports:
+    otlp-grpc: 4317  # OTLP gRPC endpoint
+    http: 16686     # Jaeger UI
