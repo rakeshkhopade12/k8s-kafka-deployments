@@ -59,7 +59,43 @@ spec:
             name: ftn-job-gateway-service
             port:
               number: 8082
+      - path: /otel-collector(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: otel-collector-service
+            port:
+              number: 8888
+      - path: /kafka-metrics(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: kafka-metrics
+            port:
+              number: 9101 
+     #- path: /loki(/|$)(.*)
+     #   pathType: ImplementationSpecific
+    #    backend:
+   #       service:
+  #          name: loki-proxy
+           # namespace: monitoring  # Specify the namespace explicitly if cross-namespace
+ #           port:
+#              number: 3100
+     # - path: /loki
+     #   pathType: Prefix
+    #    backend:
+   #       service:
+  #          name: loki-proxy
+ #           port:
+#              number: 3100
 
+#      - path: /loki(/|$)(.*)
+ #       pathType: ImplementationSpecific
+  #      backend:
+   #       service:
+    #        name: loki   # Service name in loki namespace
+     #       port:
+      #        number: 3100
      # - path: /gateway-adapter(/|$)(.*)
       #  pathType: ImplementationSpecific
        # backend:

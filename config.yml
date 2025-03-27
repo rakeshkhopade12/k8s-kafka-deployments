@@ -1,0 +1,5 @@
+cat <<EOF > config.yml
+hostPort: 0.0.0.0:9101
+rules:
+  - pattern: ".*"
+EOF

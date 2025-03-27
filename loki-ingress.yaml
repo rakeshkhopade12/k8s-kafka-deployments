@@ -1,0 +1,60 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: loki-ingress
+  namespace: monitoring
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+  labels:
+    app: loki
+spec:
+  rules:
+  - host: 116.204.173.55.nip.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: loki
+            port:
+              number: 3100
+#apiVersion: networking.k8s.io/v1
+#kind: Ingress
+#metadata:
+#  name: loki-ingress
+#  namespace: monitoring
+#spec:
+#  rules:
+#  - host: 116.204.173.55.nip.io
+#    http:
+ #     paths:
+  #    - path: /
+   #     pathType: Prefix
+    #    backend:
+     #     service:
+      #      name: loki
+       #     port:
+        #      number: 3100
+#apiVersion: networking.k8s.io/v1
+#kind: Ingress
+#metadata:
+#  name: loki-ingress
+#  namespace: monitoring
+#  annotations:
+#    kubernetes.io/ingress.class: "nginx"              # Specify NGINX ingress controller
+#    nginx.ingress.kubernetes.io/rewrite-target: /$1   # Rewrite to strip /loki prefix
+#  labels:
+#    app: loki
+#spec:
+#  rules:
+#  - host: 116.204.173.55.nip.io
+#    http:
+#      paths:
+#      - path: /loki  # Simplified to /loki
+#        pathType: Prefix
+#        backend:
+#          service:
+#            name: loki
+#            port:
+#              number: 3100

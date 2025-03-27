@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jmx-kafka-config
+  namespace: kafka
+data:
+  config.yml: |
+    rules:
+    - pattern: "kafka.server<type=BrokerTopicMetrics, name=(.*)Rate.*>"
+      name: "kafka_broker_$1"
+      type: GAUGE
+    - pattern: "kafka.network<type=RequestMetrics, name=RequestsPerSec, request=(.*)><>.*"
+      name: "kafka_request_$1_rate"
+      type: GAUGE
+    - pattern: "kafka.network<type=RequestMetrics, name=TotalTimeMs, request=(.*)><>.*"
+      name: "kafka_request_$1_time"
+      type: GAUGE
+    - pattern: "kafka.server<type=ReplicaManager, name=(.*)><>Value"
+      name: "kafka_replica_$1"
+      type: GAUGE

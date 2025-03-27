@@ -5,7 +5,7 @@ metadata:
   namespace: kafka
 spec:
   serviceName: kafka
-  replicas: 3
+  replicas: 3   # ⬅️ We are scaling to 3 Kafka pods
   selector:
     matchLabels:
       app: kafka
@@ -14,8 +14,6 @@ spec:
       labels:
         app: kafka
     spec:
-      securityContext:
-        fsGroup: 1000
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -29,7 +27,7 @@ spec:
       initContainers:
         - name: init-permissions
           image: busybox
-          command: ["sh", "-c", "chown -R 1000:1000 /var/lib/kafka/data"]
+          command: ["sh", "-c", "chown -R 1000:1000 /var/lib/kafka/data && chmod -R 777 /var/lib/kafka/data"]
           volumeMounts:
             - name: kafka-storage
               mountPath: /var/lib/kafka/data
@@ -41,6 +39,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+            - name: KAFKA_BROKER_ID
+              value: "0"  # Will be overridden below in args
             - name: KAFKA_ZOOKEEPER_CONNECT
               value: "zookeeper.kafka.svc.cluster.local:2181"
             - name: KAFKA_LISTENERS
@@ -48,40 +48,17 @@ spec:
             - name: KAFKA_ADVERTISED_LISTENERS
               value: "PLAINTEXT://$(KAFKA_POD_NAME).kafka.kafka.svc.cluster.local:9092"
             - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
-              value: "3"
+              value: "3" # ⬅️ Recommended for 3 brokers!
             - name: KAFKA_MIN_INSYNC_REPLICAS
-              value: "2"
-            - name: KAFKA_JMX_OPTS
-              value: "-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.rmi.port=9999 -Djava.rmi.server.hostname=localhost"
-            - name: KAFKA_JMX_PORT
-              value: "9999"
+              value: "2" # ⬅️ For safe replication
           command: ["/bin/sh", "-c"]
           args:
             - export KAFKA_BROKER_ID=$(echo $KAFKA_POD_NAME | awk -F'-' '{print $NF}') && exec /etc/confluent/docker/run
           ports:
             - containerPort: 9092
-              name: kafka
-            - containerPort: 9999
-              name: jmx
           volumeMounts:
             - name: kafka-storage
               mountPath: /var/lib/kafka/data
-        - name: jmx-exporter
-          image: bitnami/jmx-exporter:0.20.0
-          ports:
-            - containerPort: 9101
-              name: metrics
-          args:
-            - "9101"
-            - "/config/config.yml"
-          volumeMounts:
-            - name: jmx-config
-              mountPath: /config
-      volumes:
-        - name: jmx-config
-          configMap:
-            name: jmx-kafka-config
-            defaultMode: 0644
   volumeClaimTemplates:
     - metadata:
         name: kafka-storage
@@ -98,7 +75,7 @@ metadata:
   name: kafka
   namespace: kafka
 spec:
-  clusterIP: None
+  clusterIP: None  # ⬅️ Required for StatefulSet headless service
   ports:
     - name: kafka
       port: 9092
@@ -118,19 +95,5 @@ spec:
       port: 9092
       targetPort: 9092
       nodePort: 30992
-  selector:
-    app: kafka
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: kafka-metrics
-  namespace: kafka
-spec:
-  type: ClusterIP
-  ports:
-    - name: metrics
-      port: 9101
-      targetPort: 9101
   selector:
     app: kafka

@@ -15,7 +15,7 @@ spec:
         app: kafka
     spec:
       securityContext:
-        fsGroup: 1000
+        fsGroup: 1000  # Ensures correct file permissions for Kafka user
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -51,18 +51,12 @@ spec:
               value: "3"
             - name: KAFKA_MIN_INSYNC_REPLICAS
               value: "2"
-            - name: KAFKA_JMX_OPTS
-              value: "-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.rmi.port=9999 -Djava.rmi.server.hostname=localhost"
-            - name: KAFKA_JMX_PORT
-              value: "9999"
           command: ["/bin/sh", "-c"]
           args:
             - export KAFKA_BROKER_ID=$(echo $KAFKA_POD_NAME | awk -F'-' '{print $NF}') && exec /etc/confluent/docker/run
           ports:
             - containerPort: 9092
               name: kafka
-            - containerPort: 9999
-              name: jmx
           volumeMounts:
             - name: kafka-storage
               mountPath: /var/lib/kafka/data
@@ -72,16 +66,16 @@ spec:
             - containerPort: 9101
               name: metrics
           args:
-            - "9101"
-            - "/config/config.yml"
+            - "9101"              # Port to listen on
+            - "/config/config.yml" # Path to config file
           volumeMounts:
             - name: jmx-config
-              mountPath: /config
+              mountPath: /config  # Mount as a directory
       volumes:
         - name: jmx-config
           configMap:
             name: jmx-kafka-config
-            defaultMode: 0644
+            defaultMode: 0644  # Ensure readable permissions
   volumeClaimTemplates:
     - metadata:
         name: kafka-storage

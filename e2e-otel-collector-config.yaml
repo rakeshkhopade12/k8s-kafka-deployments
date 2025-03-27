@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-config
+  namespace: kafka
+data:
+  otel-collector-config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+          http:
+      k8s_cluster: {}
+      prometheus:
+        config:
+          scrape_configs:
+            - job_name: "kubernetes-pods"
+              kubernetes_sd_configs:
+                - role: pod
+              relabel_configs:
+                - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+                  action: keep
+                  regex: "true"
+                - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+                  action: replace
+                  target_label: __metrics_path__
+                  regex: "(.+)"
+                  replacement: "$1"
+                - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+                  action: replace
+                  regex: (.+):(?:\d+);(\d+)
+                  replacement: $1:$2
+                  target_label: __address__
+
+                #- source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+                 # action: replace
+                  #regex: "(.+);(\\d+)"
+                  #replacement: "$1:$2"
+            - job_name: "ftn-services"
+              static_configs:
+                - targets:
+                    - ftn-gateway-adapter.kafka.svc.cluster.local:8088
+                    - ftn-job-gateway-service.kafka.svc.cluster.local:8087
+                    - ftn-mobile-validator-service.kafka.svc.cluster.local:8082
+                    - ftn-rule-validator-service.kafka.svc.cluster.local:8083
+                    - ftn-source-io-connector.kafka.svc.cluster.local:8080
+            - job_name: "kafka"
+              static_configs:
+                - targets:
+                    - kafka-0.kafka.kafka.svc.cluster.local:9092
+                    - kafka-1.kafka.kafka.svc.cluster.local:9092
+                    - kafka-2.kafka.kafka.svc.cluster.local:9092
+            - job_name: "zookeeper"
+              static_configs:
+                - targets:
+                    - zookeeper-0.zookeeper.kafka.svc.cluster.local:2181
+
+    processors:
+      batch:
+      resource:
+        attributes:
+          - action: insert
+            key: k8s.namespace.name
+            from_attribute: k8s.namespace
+          - action: insert
+            key: k8s.pod.name
+            from_attribute: k8s.pod
+          - action: insert
+            key: k8s.service.name
+            from_attribute: k8s.service
+
+    exporters:
+      otlp:
+        endpoint: http://otel-backend:4317
+        tls:
+          insecure: true
+      debug:
+      prometheus:
+        endpoint: "0.0.0.0:8889"
+
+    service:
+      pipelines:
+        metrics:
+          receivers: [otlp, k8s_cluster, prometheus]
+          processors: [batch, resource]
+          exporters: [otlp, prometheus]
