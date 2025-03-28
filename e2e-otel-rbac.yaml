@@ -10,7 +10,16 @@ metadata:
   name: otel-collector-role
 rules:
   - apiGroups: [""]
-    resources: ["pods", "nodes", "namespaces", "endpoints"]
+    resources: ["pods", "nodes", "namespaces", "endpoints", "services", "resourcequotas", "replicationcontrollers"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "daemonsets", "replicasets", "statefulsets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["batch"]
+    resources: ["jobs", "cronjobs"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["autoscaling"]
+    resources: ["horizontalpodautoscalers"]
     verbs: ["get", "list", "watch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -25,3 +34,30 @@ roleRef:
   kind: ClusterRole
   name: otel-collector-role
   apiGroup: rbac.authorization.k8s.io
+#apiVersion: v1
+#kind: ServiceAccount
+#metadata:
+#  name: otel-collector-sa
+#  namespace: kafka
+#---
+#apiVersion: rbac.authorization.k8s.io/v1
+#kind: ClusterRole
+#metadata:
+#  name: otel-collector-role
+#rules:
+#  - apiGroups: [""]
+#    resources: ["pods", "nodes", "namespaces", "endpoints"]
+#    verbs: ["get", "list", "watch"]
+#---
+#apiVersion: rbac.authorization.k8s.io/v1
+#ind: ClusterRoleBinding
+#etadata:
+#  name: otel-collector-rolebinding
+#subjects:
+#  - kind: ServiceAccount
+#    name: otel-collector-sa
+#    namespace: kafka
+#roleRef:
+#  kind: ClusterRole
+ # name: otel-collector-role
+  #apiGroup: rbac.authorization.k8s.io

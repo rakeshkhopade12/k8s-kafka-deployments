@@ -18,13 +18,13 @@ spec:
         node-role: spring-app
       containers:
         - name: ftn-gateway-adapter
-          image: rakeshkhopade/ftn-gateway-adapter:0.0.1-SNAPSHOT
+          image: rakeshkhopade/ftn-gateway-adapter:latest
           ports:
             - containerPort: 8088
           env:
             - name: SERVER_PORT
               value: "8088"
-            - name: KAFKA_BROKER_URL
+            - name: KAFKA_BROKER_URLS
               value: "kafka.kafka.svc.cluster.local:9092"
             - name: GATEWAY_TOPIC_NAME
               value: "ABCDEFG-aws"
