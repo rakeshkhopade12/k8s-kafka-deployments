@@ -16,12 +16,14 @@ spec:
         node-role: spring-app
       containers:
         - name: ftn-rule-validator-service
-          image: rakeshkhopade/ftn-rule-validator-service:latest
+          image: rakeshkhopade/ftn-rule-validator-service:0.0.2-SNAPSHOT 
           ports:
             - containerPort: 8083
           env:
             - name: KAFKA_BROKER_URLS
               value: "kafka.kafka.svc.cluster.local:9092"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otel-collector-service.kafka.svc.cluster.local:4317"
 #          volumeMounts:
  #           - name: otel-collector-config
   #            mountPath: /etc/otel-collector-config.yaml

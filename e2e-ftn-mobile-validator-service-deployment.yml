@@ -16,12 +16,14 @@ spec:
         node-role: spring-app  # Ensures the pod runs on spring-app nodes
       containers:
       - name: ftn-mobile-validator-service
-        image: rakeshkhopade/ftn-mobile-validator-service:latest
+        image: rakeshkhopade/ftn-mobile-validator-service:0.0.2-SNAPSHOT
         ports:
         - containerPort: 8082
         env:
         - name: KAFKA_BROKER_URLS
           value: "kafka.kafka.svc.cluster.local:9092"
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://otel-collector-service.kafka.svc.cluster.local:4317"
 #        volumeMounts:
  #       - name: otel-collector-config
   #        mountPath: /etc/otel-collector-config.yaml

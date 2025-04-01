@@ -5,14 +5,16 @@ metadata:
   namespace: kafka
 data:
   otel-collector-config.yaml: |
-    extensions:  # Add this section
+    extensions:
       health_check:
         endpoint: "0.0.0.0:13133"
     receivers:
       otlp:
         protocols:
           grpc:
+            endpoint: "0.0.0.0:4317"
           http:
+            endpoint: "0.0.0.0:4318"
       k8s_cluster: {}
       prometheus:
         config:
@@ -66,7 +68,7 @@ data:
             key: k8s.service.name
             from_attribute: k8s.service
     exporters:
-      otlp:
+      otlp/jaeger:
         endpoint: "jaeger-collector.kafka.svc.cluster.local:4317"
         tls:
           insecure: true
@@ -75,8 +77,9 @@ data:
       logging:
         verbosity: detailed
     service:
-      extensions: [health_check]  # Enable the extension
+      extensions: [health_check]
       pipelines:
+       # exporters: [otlp/jaeger]
         metrics:
           receivers: [otlp, k8s_cluster, prometheus]
           processors: [batch, resource]
@@ -84,4 +87,4 @@ data:
         traces:
           receivers: [otlp]
           processors: [batch]
-          exporters: [otlp, logging]
+          exporters: [logging, otlp/jaeger]
